@@ -4,7 +4,8 @@ import {
   DefaultProps,
   DefaultMethods,
   DefaultComputed,
-  PropsDefinition
+  PropsDefinition,
+  DefaultInjected
 } from "./options";
 
 // Expose some types for backward compatibility...
@@ -14,9 +15,9 @@ declare namespace Vue {
   export type VueConstructor<V extends Vue = Vue> = V.VueConstructor<V>;
 
   // options.d.ts
-  export type Component<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Props=DefaultProps> = V.Component<Data, Methods, Computed, Props>;
-  export type AsyncComponent<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Props=DefaultProps> = V.AsyncComponent<Data, Methods, Computed, Props>;
-  export type ComponentOptions<V extends Vue, Data=DefaultData<V>, Methods=DefaultMethods<V>, Computed=DefaultComputed, PropsDef=PropsDefinition<DefaultProps>, Props=DefaultProps> = V.ComponentOptions<V, Data, Methods, Computed, PropsDef, Props>;
+  export type Component<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Injected=DefaultInjected,  Props=DefaultProps> = V.Component<Data, Methods, Computed, Injected, Props>;
+  export type AsyncComponent<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Injected=DefaultInjected, Props=DefaultProps> = V.AsyncComponent<Data, Methods, Computed, Injected, Props>;
+  export type ComponentOptions<V extends Vue, Data=DefaultData<V>, Methods=DefaultMethods<V>, Computed=DefaultComputed, Injected=DefaultInjected, PropsDef=PropsDefinition<DefaultProps>, Props=DefaultProps> = V.ComponentOptions<V, Data, Methods, Computed, Injected, PropsDef, Props>;
   export type FunctionalComponentOptions<Props = DefaultProps, PropDefs = PropsDefinition<Props>> = V.FunctionalComponentOptions<Props, PropDefs>;
   export type RenderContext<Props=DefaultProps> = V.RenderContext<Props>;
   export type PropType<T> = V.PropType<T>;

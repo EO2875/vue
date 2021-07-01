@@ -2,32 +2,32 @@ import { Vue, CreateElement, CombinedVueInstance } from "./vue";
 import { VNode, VNodeData, VNodeDirective, NormalizedScopedSlot } from "./vnode";
 
 type Constructor = {
-  new (...args: any[]): any;
+  new(...args: any[]): any;
 }
 
 // we don't support infer props in async component
 // N.B. ComponentOptions<V> is contravariant, the default generic should be bottom type
-export type Component<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Props=DefaultProps> =
+export type Component<Data = DefaultData<never>, Methods = DefaultMethods<never>, Computed = DefaultComputed, Injected = DefaultInjected, Props = DefaultProps> =
   | typeof Vue
   | FunctionalComponentOptions<Props>
-  | ComponentOptions<never, Data, Methods, Computed, Props>
+  | ComponentOptions<never, Data, Methods, Computed, Injected, Props>
 
 type EsModule<T> = T | { default: T }
 
-type ImportedComponent<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Props=DefaultProps>
-  = EsModule<Component<Data, Methods, Computed, Props>>
+type ImportedComponent<Data = DefaultData<never>, Methods = DefaultMethods<never>, Computed = DefaultComputed, Injected = DefaultInjected, Props = DefaultProps>
+  = EsModule<Component<Data, Methods, Computed, Injected, Props>>
 
-export type AsyncComponent<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Props=DefaultProps>
-  = AsyncComponentPromise<Data, Methods, Computed, Props>
-  | AsyncComponentFactory<Data, Methods, Computed, Props>
+export type AsyncComponent<Data = DefaultData<never>, Methods = DefaultMethods<never>, Computed = DefaultComputed, Injected = DefaultInjected, Props = DefaultProps>
+  = AsyncComponentPromise<Data, Methods, Computed, Injected, Props>
+  | AsyncComponentFactory<Data, Methods, Computed, Injected, Props>
 
-export type AsyncComponentPromise<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Props=DefaultProps> = (
-  resolve: (component: Component<Data, Methods, Computed, Props>) => void,
+export type AsyncComponentPromise<Data = DefaultData<never>, Methods = DefaultMethods<never>, Computed = DefaultComputed, Injected = DefaultInjected, Props = DefaultProps> = (
+  resolve: (component: Component<Data, Methods, Computed, Injected, Props>) => void,
   reject: (reason?: any) => void
-) => Promise<ImportedComponent<Data, Methods, Computed, Props>> | void;
+) => Promise<ImportedComponent<Data, Methods, Computed, Injected, Props>> | void;
 
-export type AsyncComponentFactory<Data=DefaultData<never>, Methods=DefaultMethods<never>, Computed=DefaultComputed, Props=DefaultProps> = () => {
-  component: Promise<ImportedComponent<Data, Methods, Computed, Props>>;
+export type AsyncComponentFactory<Data = DefaultData<never>, Methods = DefaultMethods<never>, Computed = DefaultComputed, Injected = DefaultInjected, Props = DefaultProps> = () => {
+  component: Promise<ImportedComponent<Data, Methods, Computed, Injected, Props>>;
   loading?: ImportedComponent;
   error?: ImportedComponent;
   delay?: number;
@@ -48,30 +48,32 @@ type DataDef<Data, Props, V> = Data | ((this: Readonly<Props> & V) => Data)
 /**
  * This type should be used when an array of strings is used for a component's `props` value.
  */
-export type ThisTypedComponentOptionsWithArrayProps<V extends Vue, Data, Methods, Computed, PropNames extends string> =
+export type ThisTypedComponentOptionsWithArrayProps<V extends Vue, Data, Methods, Computed, Injected, PropNames extends string> =
   object &
-  ComponentOptions<V, DataDef<Data, Record<PropNames, any>, V>, Methods, Computed, PropNames[], Record<PropNames, any>> &
-  ThisType<CombinedVueInstance<V, Data, Methods, Computed, Readonly<Record<PropNames, any>>>>;
+  ComponentOptions<V, DataDef<Data, Record<PropNames, any>, V>, Methods, Computed, Injected, PropNames[], Record<PropNames, any>> &
+  ThisType<CombinedVueInstance<V, Data, Methods, Computed, Injected, Readonly<Record<PropNames, any>>>>;
 
 /**
  * This type should be used when an object mapped to `PropOptions` is used for a component's `props` value.
  */
-export type ThisTypedComponentOptionsWithRecordProps<V extends Vue, Data, Methods, Computed, Props> =
+export type ThisTypedComponentOptionsWithRecordProps<V extends Vue, Data, Methods, Computed, Injected, Props> =
   object &
-  ComponentOptions<V, DataDef<Data, Props, V>, Methods, Computed, RecordPropsDefinition<Props>, Props> &
-  ThisType<CombinedVueInstance<V, Data, Methods, Computed, Readonly<Props>>>;
+  ComponentOptions<V, DataDef<Data, Props, V>, Methods, Computed, Injected, RecordPropsDefinition<Props>> &
+  ThisType<CombinedVueInstance<V, Data, Methods, Computed, Readonly<Injected>, Readonly<Props>>>;
 
-type DefaultData<V> =  object | ((this: V) => object);
+type DefaultData<V> = object | ((this: V) => object);
 type DefaultProps = Record<string, any>;
-type DefaultMethods<V> =  { [key: string]: (this: V, ...args: any[]) => any };
+type DefaultInjected = Record<string, any>;
+type DefaultMethods<V> = { [key: string]: (this: V, ...args: any[]) => any };
 type DefaultComputed = { [key: string]: any };
 export interface ComponentOptions<
   V extends Vue,
-  Data=DefaultData<V>,
-  Methods=DefaultMethods<V>,
-  Computed=DefaultComputed,
-  PropsDef=PropsDefinition<DefaultProps>,
-  Props=DefaultProps> {
+  Data = DefaultData<V>,
+  Methods = DefaultMethods<V>,
+  Computed = DefaultComputed,
+  Injected = DefaultInjected,
+  PropsDef = PropsDefinition<DefaultProps>,
+  Props = DefaultProps> {
   data?: Data;
   props?: PropsDef;
   propsData?: object;
@@ -100,12 +102,12 @@ export interface ComponentOptions<
   serverPrefetch?(this: V): Promise<void>;
 
   directives?: { [key: string]: DirectiveFunction | DirectiveOptions };
-  components?: { [key: string]: Component<any, any, any, any> | AsyncComponent<any, any, any, any> };
+  components?: { [key: string]: Component<any, any, any, any, any> | AsyncComponent<any, any, any, any, any> };
   transitions?: { [key: string]: object };
   filters?: { [key: string]: Function };
 
   provide?: object | (() => object);
-  inject?: InjectOptions;
+  inject?: InjectDef<Injected>;
 
   model?: {
     prop?: string;
@@ -129,12 +131,12 @@ export interface FunctionalComponentOptions<Props = DefaultProps, PropDefs = Pro
     prop?: string;
     event?: string;
   };
-  inject?: InjectOptions;
+  inject?: InjectDef;
   functional: boolean;
   render?(this: undefined, createElement: CreateElement, context: RenderContext<Props>): VNode | VNode[];
 }
 
-export interface RenderContext<Props=DefaultProps> {
+export interface RenderContext<Props = DefaultProps> {
   props: Props;
   children: VNode[];
   slots(): any;
@@ -151,7 +153,7 @@ export type PropType<T> = Prop<T> | Prop<T>[];
 
 export type PropValidator<T> = PropOptions<T> | PropType<T>;
 
-export interface PropOptions<T=any> {
+export interface PropOptions<T = any> {
   type?: PropType<T>;
   required?: boolean;
   default?: T | null | undefined | (() => T | null | undefined);
@@ -201,7 +203,11 @@ export interface DirectiveOptions {
 }
 
 export type InjectKey = string | symbol;
+type InjectOptions<I = object> = {
+  from?: InjectKey,
+  default?: I,
+}
 
-export type InjectOptions = {
-  [key: string]: InjectKey | { from?: InjectKey, default?: any }
-} | string[];
+export type InjectDef<T = object> = {
+  [K in keyof T]: InjectKey | InjectDef<T[K]>
+} | (keyof T)[]
